@@ -1,6 +1,8 @@
 #include <iostream>
 #include <unistd.h>
 #include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
 
 using std::cout;
 using std::endl;
@@ -13,9 +15,9 @@ typedef int LONG;
 typedef unsigned short WORD;
 typedef unsigned int DWORD;
 
-void aclarar(unsigned char** red, unsigned char** green, unsigned char** blue, int n);
-void medianFilter(unsigned char** red, unsigned char** green, unsigned char** blue, int window);
-void multiplyBlend(unsigned char** red1, unsigned char** green1, unsigned char** blue1, unsigned char** red2,
+extern "C" void aclarar(unsigned char** red, unsigned char** green, unsigned char** blue, int n);
+extern "C" void medianFilter(unsigned char** red, unsigned char** green, unsigned char** blue, int window);
+extern "C" void multiplyBlend(unsigned char** red1, unsigned char** green1, unsigned char** blue1, unsigned char** red2,
 unsigned char** green2, unsigned char** blue2);
 
 
@@ -133,6 +135,7 @@ void WriteOutBmp24(char* FileBuffer, const char* NameOfFileToCreate, int BufferS
 
 
 int main(int argc, char** argv) {
+    int n =4;
 	char* FileBuffer; int BufferSize;
 	if(argc != 3) {
 		cout << "Debe ingresar un archivo de lectura y el archivo de escritura" << endl;
@@ -147,6 +150,7 @@ int main(int argc, char** argv) {
 	RGB_Allocate(greens);
 	RGB_Allocate(blues);
 	GetPixlesFromBMP24( reds, greens, blues, BufferSize, rows, cols, FileBuffer);
+    aclarar(reds, greens, blues, n);
 	WriteOutBmp24(FileBuffer, argv[2], BufferSize);
 	return 1;
 }
