@@ -11,21 +11,22 @@ aclarar:
     mov ebp, esp
     mov eax, dword[ebp +20];valor n
     mov ebx, dword[ebp +8]; primera matriz red
-    mov ecx, 1
-    mov esi, 0
-    call reco
+    call setupIter
     mov ebx, [ebp +12] ;segunda matriz green
-    mov ecx, 1
-    mov esi, 0
-    call reco
+    call setupIter
     mov ebx, [ebp +16] ;tercera matriz blue
+    call setupIter
+    JMP fin
+
+    setupIter:
+    push ebp
+    mov ebp, esp
     mov ecx, 1
     mov esi, 0
-    call reco
-    JMP fin
+    jmp reco
     
     reco:
-    cmp ecx, 262144
+    cmp ecx, 67000
     JE fin
     add [ebx+esi*4], eax
     inc ecx
@@ -36,3 +37,4 @@ aclarar:
     mov esp, ebp
     pop ebp
     ret
+    
