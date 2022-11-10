@@ -9,8 +9,8 @@ aclarar:
  
     push ebp
     mov ebp, esp
-    mov eax, dword[ebp +20];valor n
-    mov ebx, dword[ebp +8]; primera matriz red
+    mov eax, 50;valor n
+    mov ebx, [ebp +8]; primera matriz red
     call setupIter
     mov ebx, [ebp +12] ;segunda matriz green
     call setupIter
@@ -23,15 +23,39 @@ aclarar:
     mov ebp, esp
     mov ecx, 1
     mov esi, 0
-    jmp reco
+    mov edi, 0
+    jmp recorro
     
-    reco:
+    recorro:
     cmp ecx, 67000
     JE fin
-    add [ebx+esi*4], eax
+    mov edx, [ebx+esi*4]
+    add edx, eax
+    cmp edx, 255
+    jg overflow
+    ;cmp edx, 0
+    ;jl underflow
+    jmp normal
+
+    overflow:
+    mov edx, 255
+    ;mov [ebx+esi*4], edx   ;bug al mover dato
     inc ecx
     inc esi
-    JMP reco
+    JMP recorro
+
+    underflow:
+    mov edx, 0
+    ;mov [ebx+esi*4], edx
+    inc ecx
+    inc esi
+    JMP recorro
+
+    normal:
+    mov [ebx+esi*4], edx
+    inc ecx
+    inc esi
+    JMP recorro
     
     fin:
     mov esp, ebp
