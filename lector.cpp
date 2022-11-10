@@ -135,7 +135,7 @@ void WriteOutBmp24(char* FileBuffer, const char* NameOfFileToCreate, int BufferS
 
 
 int main(int argc, char** argv) {
-    int n = 100;
+    int n = 50;
 	char* FileBuffer; int BufferSize;
 	if(argc != 3) {
 		cout << "Debe ingresar un archivo de lectura y el archivo de escritura" << endl;

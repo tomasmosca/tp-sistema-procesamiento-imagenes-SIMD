@@ -9,12 +9,12 @@ aclarar:
  
     push ebp
     mov ebp, esp
-    mov eax, 50;valor n
-    mov ebx, [ebp +8]; primera matriz red
+    mov eax, [ebp + 20];valor n
+    mov ebx, [ebp + 8]; primera matriz red
     call setupIter
-    mov ebx, [ebp +12] ;segunda matriz green
+    mov ebx, [ebp + 12] ;segunda matriz green
     call setupIter
-    mov ebx, [ebp +16] ;tercera matriz blue
+    mov ebx, [ebp + 16] ;tercera matriz blue
     call setupIter
     JMP fin
 
@@ -52,7 +52,7 @@ aclarar:
     JMP recorro
 
     normal:
-    mov [ebx+esi*4], edx
+    mov [ebx+esi*4], dl
     inc ecx
     inc esi
     JMP recorro
