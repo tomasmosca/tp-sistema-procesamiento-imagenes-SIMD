@@ -50,6 +50,12 @@ unsigned char** blues;
 int rows;
 int cols;
 
+unsigned char** reds2;
+unsigned char** greens2;
+unsigned char** blues2;
+int rows2;
+int cols2;
+
 void RGB_Allocate(unsigned char**& dude) {
     dude = new unsigned char*[rows];
     for (int i = 0; i < rows; i++)
@@ -140,7 +146,7 @@ int main(int argc, char** argv) {
 	char* FileBuffer; int BufferSize;
 	if(argc != 3) {
 		cout << "Debe ingresar un archivo de lectura y el archivo de escritura" << endl;
-		cout << "Use " << argv[0] << " <FILE_IN.bmp> <FILE_OUT.bmp>" << endl;
+		cout << "Use " << argv[0] << " <FILE_IN.bmp> <FILE2_IN.bmp> <FILE_OUT.bmp>" << endl;
 	}
 	if (!FillAndAllocate(FileBuffer, argv[1], rows, cols, BufferSize)){
 		cout << "File read error" << endl; 
@@ -151,8 +157,19 @@ int main(int argc, char** argv) {
 	RGB_Allocate(greens);
 	RGB_Allocate(blues);
 	GetPixlesFromBMP24( reds, greens, blues, BufferSize, rows, cols, FileBuffer);
+
+	if (!FillAndAllocate(FileBuffer, argv[2], rows, cols, BufferSize)){
+		cout << "File read error" << endl; 
+		return 0;
+	}
+    cout << "Rows: " << rows2 << " Cols: " << cols2 << endl;
+    RGB_Allocate(reds2);
+	RGB_Allocate(greens2);
+	RGB_Allocate(blues2);
+	GetPixlesFromBMP24( reds2, greens2, blues2, BufferSize, rows2, cols2, FileBuffer);
     //aclarar(reds, greens, blues, n);
-    aclararSIMD(reds, greens, blues, n);
-	WriteOutBmp24(FileBuffer, argv[2], BufferSize);
+    //aclararSIMD(reds, greens, blues, n);
+    multiplyBlend(reds, greens, blues, reds2, greens2, blues2);
+	WriteOutBmp24(FileBuffer, argv[3], BufferSize);
 	return 1;
 }

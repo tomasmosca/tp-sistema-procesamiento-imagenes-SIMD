@@ -4,6 +4,7 @@ section .text
 ;global main
 global aclarar
 global aclararSIMD
+global multiplyBlend
 ;main:
 
 aclarar:
@@ -124,6 +125,40 @@ cambio3:
 
 noMover:
     ret
+
+;----------------------------------------------
+
+multiplyBlend:
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp+8];red1
+    mov ebx, [ebp+20];red2
+    call setupMul
+    mov eax, [ebp+12];green1
+    mov ebx, [ebp+24];green2
+    call setupMul
+    mov eax, [ebp+16];blue1
+    mov ebx, [ebp+28];blue2
+    call setupMul
+    JMP fin
+
+setupMul:
+    push ebp
+    mov ebp, esp
+    mov ecx, 1
+    mov esi, 0
+    JMP multiply
+    
+multiply:
+    cmp ecx, 67000
+    JE fin
+    mov edx, dword[eax+esi*4]
+    mov edi, dword[ebx+esi*4]
+    imul edx, edi
+    mov [eax+esi*4], dl
+    inc ecx
+    inc esi
+    JMP multiply
 
 fin:
     mov esp, ebp
