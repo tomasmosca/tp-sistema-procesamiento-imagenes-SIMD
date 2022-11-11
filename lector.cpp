@@ -16,6 +16,7 @@ typedef unsigned short WORD;
 typedef unsigned int DWORD;
 
 extern "C" void aclarar(unsigned char** red, unsigned char** green, unsigned char** blue, int n);
+extern "C" void aclararSIMD(unsigned char** red, unsigned char** green, unsigned char** blue, int n);
 extern "C" void medianFilter(unsigned char** red, unsigned char** green, unsigned char** blue, int window);
 extern "C" void multiplyBlend(unsigned char** red1, unsigned char** green1, unsigned char** blue1, unsigned char** red2,
 unsigned char** green2, unsigned char** blue2);
@@ -150,7 +151,8 @@ int main(int argc, char** argv) {
 	RGB_Allocate(greens);
 	RGB_Allocate(blues);
 	GetPixlesFromBMP24( reds, greens, blues, BufferSize, rows, cols, FileBuffer);
-    aclarar(reds, greens, blues, n);
+    //aclarar(reds, greens, blues, n);
+    aclararSIMD(reds, greens, blues, n);
 	WriteOutBmp24(FileBuffer, argv[2], BufferSize);
 	return 1;
 }

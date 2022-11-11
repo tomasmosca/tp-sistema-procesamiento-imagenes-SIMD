@@ -3,6 +3,7 @@
 section .text
 ;global main
 global aclarar
+global aclararSIMD
 ;main:
 
 aclarar:
@@ -56,9 +57,75 @@ aclarar:
     inc ecx
     inc esi
     JMP recorro
+
+
+aclararSIMD:
+
+    push ebp
+    mov ebp, esp
+    mov eax, [ebp + 20];  n
+    mov ebx, [ebp + 8];  red
+    mov esi, [ebp + 12] ; green
+    mov edi, [ebp + 16] ; blue
+    jmp setup
+
+    setup:
+    mov ecx, 2  ;contador
+    movd mm7, eax
+    jmp cicloSetup
+
+    cicloSetup:
+    paddw mm6, mm7  ;en mm6 esta n (ocupa los 64 bytes)
+    cmp ecx, 1
+    je recorridoPrincipal
+    psllq mm6, 8
+    dec ecx
+    jmp cicloSetup
+
+    recorridoPrincipal:
+
+    cmp ecx, 67000
+    je fin
+
+    movd mm0, [ebx+ecx*4]
+    movd mm1, [esi+ecx*4]
+    movd mm2, [edi+ecx*4]
+
+    paddw mm0, mm6
+    paddw mm1, mm6
+    paddw mm2, mm6
     
-    fin:
+    movd edx, mm0
+    call cambio1
+    movd edx, mm1
+    call cambio2
+    movd edx, mm2
+    call cambio3
+
+    inc ecx
+    jmp recorridoPrincipal
+
+
+cambio1:
+    cmp edx, 255
+    jg noMover
+    mov [ebx+ecx*4], edx
+    ret
+cambio2:
+    cmp edx, 255
+    jg noMover
+    mov [esi+ecx*4], edx
+    ret
+cambio3:
+    cmp edx, 255
+    jg noMover
+    mov [edi+ecx*4], edx
+    ret
+
+noMover:
+    ret
+
+fin:
     mov esp, ebp
     pop ebp
     ret
-    
