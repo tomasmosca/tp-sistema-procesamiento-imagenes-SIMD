@@ -286,4 +286,5 @@ multiplyBlendSIMD:
 fin:
     mov esp, ebp
     pop ebp
+    emms
     ret

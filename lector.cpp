@@ -202,7 +202,7 @@ int main(int argc, char** argv) {
     clock_gettime(CLOCK_REALTIME, &begin);
     //aclararSIMD(reds, greens, blues, n);
     //aclarar(reds, greens, blues, n);
-    multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
+    //multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
     //multiplyBlendSIMD(reds, greens, blues, reds1, greens1, blues1);
     clock_gettime(CLOCK_REALTIME, &end);
     long seconds = end.tv_sec - begin.tv_sec;
