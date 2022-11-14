@@ -3,6 +3,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cmath>
 
 using std::cout;
 using std::endl;
@@ -20,6 +21,9 @@ extern "C" void aclararSIMD(unsigned char** red, unsigned char** green, unsigned
 extern "C" void medianFilter(unsigned char** red, unsigned char** green, unsigned char** blue, int window);
 extern "C" void multiplyBlend(unsigned char** red1, unsigned char** green1, unsigned char** blue1, unsigned char** red2,
 unsigned char** green2, unsigned char** blue2);
+extern "C" void multiplyBlendSIMD(unsigned char** red1, unsigned char** green1, unsigned char** blue1, unsigned char** red2,
+unsigned char** green2, unsigned char** blue2);
+extern "C" void medianFilter(unsigned char** red, unsigned char** green, unsigned char** blue, int window);
 
 
 typedef struct tagBITMAPFILEHEADER {
@@ -50,11 +54,37 @@ unsigned char** blues;
 int rows;
 int cols;
 
-unsigned char** reds2;
-unsigned char** greens2;
-unsigned char** blues2;
-int rows2;
-int cols2;
+unsigned char** reds1;
+unsigned char** greens1;
+unsigned char** blues1;
+int rows1;
+int cols1;
+
+void mBlend() {
+    int temp = 0;
+    for (int i = rows / 513; i < rows; i++)
+        for (int j = cols / 513; j < cols; j++) {
+            temp = (greens[i][j] * greens1[i][j]) / 255;
+            greens[i][j] = temp;
+            temp = (reds[i][j] * reds1[i][j]) / 255;
+            reds[i][j] = temp;
+            temp = (blues[i][j] * blues1[i][j]) / 255;
+            blues[i][j] = temp;
+        }
+}
+
+void medianF() {
+    int temp = 0;
+    for (int i = (rows / 513) + 1; i < rows - 1; i++)
+        for (int j = (cols / 513) + 1; j < cols - 1; j++) {
+            temp = round(greens[i-1][j-1]+greens[i-1][j]+greens[i-1][j+1]+greens[i][j-1]+greens[i][j]+greens[i][j+1]+greens[i+1][j-1]+greens[i+1][j]+greens[i+1][j+1]) / 9;
+            greens[i][j] = temp;
+            temp = round(blues[i-1][j-1]+blues[i-1][j]+blues[i-1][j+1]+blues[i][j-1]+blues[i][j]+blues[i][j+1]+blues[i+1][j-1]+blues[i+1][j]+blues[i+1][j+1]) / 9;
+            blues[i][j] = temp;
+            temp = round(reds[i-1][j-1]+reds[i-1][j]+reds[i-1][j+1]+reds[i][j-1]+reds[i][j]+reds[i][j+1]+reds[i+1][j-1]+reds[i+1][j]+reds[i+1][j+1]) / 9;
+            reds[i][j] = temp;
+        }
+}
 
 void RGB_Allocate(unsigned char**& dude) {
     dude = new unsigned char*[rows];
@@ -144,32 +174,43 @@ void WriteOutBmp24(char* FileBuffer, const char* NameOfFileToCreate, int BufferS
 int main(int argc, char** argv) {
     int n = 50;
 	char* FileBuffer; int BufferSize;
+    char* FileBuffer1; int BufferSize1;
 	if(argc != 3) {
 		cout << "Debe ingresar un archivo de lectura y el archivo de escritura" << endl;
-		cout << "Use " << argv[0] << " <FILE_IN.bmp> <FILE2_IN.bmp> <FILE_OUT.bmp>" << endl;
+		cout << "Use " << argv[0] << " <FILE_IN.bmp> <FILE_OUT.bmp>" << endl;
 	}
-	if (!FillAndAllocate(FileBuffer, argv[1], rows, cols, BufferSize)){
+    if (!FillAndAllocate(FileBuffer, argv[1], rows, cols, BufferSize)){
 		cout << "File read error" << endl; 
 		return 0;
 	}
 	cout << "Rows: " << rows << " Cols: " << cols << endl;
-	RGB_Allocate(reds);
-	RGB_Allocate(greens);
-	RGB_Allocate(blues);
-	GetPixlesFromBMP24( reds, greens, blues, BufferSize, rows, cols, FileBuffer);
-
-	if (!FillAndAllocate(FileBuffer, argv[2], rows, cols, BufferSize)){
+    if (!FillAndAllocate(FileBuffer1, argv[2], rows1, cols1, BufferSize1)){
 		cout << "File read error" << endl; 
 		return 0;
 	}
-    cout << "Rows: " << rows2 << " Cols: " << cols2 << endl;
-    RGB_Allocate(reds2);
-	RGB_Allocate(greens2);
-	RGB_Allocate(blues2);
-	GetPixlesFromBMP24( reds2, greens2, blues2, BufferSize, rows2, cols2, FileBuffer);
+    cout << "Rows: " << rows1 << " Cols: " << cols1 << endl;
+	RGB_Allocate(reds);
+	RGB_Allocate(greens);
+	RGB_Allocate(blues);
+    RGB_Allocate(reds1);
+	RGB_Allocate(greens1);
+	RGB_Allocate(blues1);
+	GetPixlesFromBMP24( reds, greens, blues, BufferSize, rows, cols, FileBuffer);
+    GetPixlesFromBMP24( reds1, greens1, blues1, BufferSize1, rows1, cols1, FileBuffer1);
     //aclarar(reds, greens, blues, n);
+    struct timespec begin, end; 
+    clock_gettime(CLOCK_REALTIME, &begin);
     //aclararSIMD(reds, greens, blues, n);
-    multiplyBlend(reds, greens, blues, reds2, greens2, blues2);
-	WriteOutBmp24(FileBuffer, argv[3], BufferSize);
+    //aclarar(reds, greens, blues, n);
+    multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
+    //multiplyBlendSIMD(reds, greens, blues, reds1, greens1, blues1);
+    clock_gettime(CLOCK_REALTIME, &end);
+    long seconds = end.tv_sec - begin.tv_sec;
+    long nanoseconds = end.tv_nsec - begin.tv_nsec;
+    double elapsed = seconds + nanoseconds*1e-9;
+    printf("Time measured: %.5f seconds.\n", elapsed);
+    //mBlend();
+    //medianF();
+	WriteOutBmp24(FileBuffer, "Lena4.bmp", BufferSize);
 	return 1;
 }
