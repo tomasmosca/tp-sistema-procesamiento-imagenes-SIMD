@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cmath>
+#include <ctime>
 
 using std::cout;
 using std::endl;
@@ -48,12 +49,14 @@ typedef struct tagBITMAPINFOHEADER {
     DWORD biClrImportant;
 } BITMAPINFOHEADER, *PBITMAPINFOHEADER;
 
+//RGB primer imagen
 unsigned char** reds;
 unsigned char** greens;
 unsigned char** blues;
 int rows;
 int cols;
 
+//RGB segunda imagen (para multiply blend)
 unsigned char** reds1;
 unsigned char** greens1;
 unsigned char** blues1;
@@ -61,6 +64,7 @@ int rows1;
 int cols1;
 
 void mBlend() {
+    // Multiply Blend C++
     int temp = 0;
     for (int i = rows / 513; i < rows; i++)
         for (int j = cols / 513; j < cols; j++) {
@@ -74,6 +78,7 @@ void mBlend() {
 }
 
 void medianF() {
+    // Average Filter C++
     int temp = 0;
     for (int i = (rows / 513) + 1; i < rows - 1; i++)
         for (int j = (cols / 513) + 1; j < cols - 1; j++) {
@@ -179,35 +184,43 @@ int main(int argc, char** argv) {
 		cout << "Debe ingresar un archivo de lectura y el archivo de escritura" << endl;
 		cout << "Use " << argv[0] << " <FILE_IN.bmp> <FILE_OUT.bmp>" << endl;
 	}
+    // Fill a la imagen 1
     if (!FillAndAllocate(FileBuffer, argv[1], rows, cols, BufferSize)){
 		cout << "File read error" << endl; 
 		return 0;
 	}
 	cout << "Rows: " << rows << " Cols: " << cols << endl;
+    // Fill a la imagen 2 (para multiply blend)
     if (!FillAndAllocate(FileBuffer1, argv[2], rows1, cols1, BufferSize1)){
 		cout << "File read error" << endl; 
 		return 0;
 	}
     cout << "Rows: " << rows1 << " Cols: " << cols1 << endl;
+
 	RGB_Allocate(reds);
 	RGB_Allocate(greens);
 	RGB_Allocate(blues);
     RGB_Allocate(reds1);
 	RGB_Allocate(greens1);
 	RGB_Allocate(blues1);
+
 	GetPixlesFromBMP24( reds, greens, blues, BufferSize, rows, cols, FileBuffer);
     GetPixlesFromBMP24( reds1, greens1, blues1, BufferSize1, rows1, cols1, FileBuffer1);
-    struct timespec begin, end; 
-    clock_gettime(CLOCK_REALTIME, &begin);
+
+    // Inicio del timer
+    std::clock_t    start;
+    start = std::clock();
+
+    // Funciones ASM
     aclararSIMD(reds, greens, blues, n);
     //aclarar(reds, greens, blues, n);
     //multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
     //multiplyBlendSIMD(reds, greens, blues, reds1, greens1, blues1);
-    clock_gettime(CLOCK_REALTIME, &end);
-    long seconds = end.tv_sec - begin.tv_sec;
-    long nanoseconds = end.tv_nsec - begin.tv_nsec;
-    double elapsed = seconds + nanoseconds*1e-9;
-    printf("Time measured: %.5f seconds.\n", elapsed);
+
+    // Fin del timer
+    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+
+    // Funciones para testear en C++
     //mBlend();
     //medianF();
 	WriteOutBmp24(FileBuffer, "img-resultado.bmp", BufferSize);
