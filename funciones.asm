@@ -150,7 +150,7 @@ multiplyBlend:
 setupMul:
     push ebp
     mov ebp, esp
-    mov ecx, 1  ; contador
+    mov ecx, 0  ; contador
     mov esi, 0  ; multiplicador
     mov edi, 0
     JMP multiply
@@ -158,62 +158,39 @@ setupMul:
 multiply:
     cmp ecx, 67000
     JE fin
-    mov dl, [eax+esi*4] ; byte de red1
+    mov dl, byte[eax+esi*4] ; byte de red1
     push eax  ; Temp
     push ecx  ; para contener el 255 a dividir
     xor eax, eax  ; limpiamos eax
     xor ecx, ecx
-    mov al, [ebx+esi*4]  ; byte de red2
+    mov al, byte[ebx+esi*4]  ; byte de red2
     imul eax, edx  ; multiplico (eax = red1 * red2)
     push edx ; push edx a la pila porque va a haber remainder de division
     xor edx, edx ; limpio edx
-    ;call division
-    mov ecx, 255 ; muevo 255
-    idiv ecx ; division (eax = red1 * red2 / 255)
-    ;push eax
-    ;xor eax, eax
-    ;mov ax, [esp]
-    ;add esp, 4
-    ;call division
-    ;cmp eax, 255
-    ;jge cambioMul
+    ;division anda mal
+    ;mov ecx, 255 ; muevo 255
+    ;idiv ecx ; division (eax = red1 * red2 / 255)
+    cmp eax, 255
+    jge cambioMul
     xor edx, edx
     pop edx ; edx queda como antes
     mov dl, al ; resultado final en edx
     pop ecx ; ecx como antes
     xor eax, eax
     pop eax ; eax como antes
-    mov byte [eax+esi*4], dl
+    mov byte[eax+esi*4], dl
     inc ecx
     inc esi
     JMP multiply
 
 
-;cambioMul:
-;    pop edx
-;    pop ecx
-;    inc ecx
-;    inc esi
-;    pop eax
-;    JMP multiply
-
-division:
-    push ebp
-    mov ebp, esp
-    mov cx,0
-
-divloop:
-    cmp eax, 0
-    jle done   
-    sub eax, 255
-    inc cx   ; resultado en cx
-    jmp divloop
-
-done:
-    mov eax, ecx
-    mov esp, ebp
-    pop ebp
-    ret
+cambioMul:
+    pop edx
+    pop ecx
+    inc ecx
+    inc esi
+    pop eax
+    JMP multiply
 
 ;--------------------------------------------------------------
 
@@ -288,3 +265,4 @@ fin:
     pop ebp
     emms
     ret
+
