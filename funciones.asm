@@ -105,8 +105,8 @@ noMover:
 
 multiplyBlend:
     push ebp
-    ;limpio los registros
     mov ebp, esp
+    ;limpio los registros
     xor eax, eax
     xor ebx, ebx
     xor ecx, ecx
@@ -125,46 +125,41 @@ multiplyBlend:
 setupMul:
     push ebp
     mov ebp, esp
-    mov ecx, 0  ; contador
-    mov esi, 0  ; multiplicador
-    mov edi, 0
+    mov ecx, 0      ; contador
+    mov esi, 0      ; multiplicador
     JMP multiply
     
 multiply:
     cmp ecx, 67000
     JE fin
-    mov dl, byte[eax+esi*4] ; byte de red1
-    push eax  ; Temp
-    push ecx  ; para contener el 255 a dividir
-    xor eax, eax  ; limpiamos eax
-    xor ecx, ecx
+    mov dl, byte[eax+esi*4]  ; byte de array
+    push eax                 ; usaremos eax para contener resultado de elem1 * elem2 / 255
+    push ecx                 ; para contener el 255 a dividir
+    xor eax, eax             ; limpiamos eax
     mov al, byte[ebx+esi*4]  ; byte de red2
-    imul eax, edx  ; multiplico (eax = red1 * red2)
-    push edx ; push edx a la pila porque va a haber remainder de division
-    xor edx, edx ; limpio edx
-    ;division anda mal
-    ;mov ecx, 255 ; muevo 255
-    ;idiv ecx ; division (eax = red1 * red2 / 255)
-    cmp eax, 255
+    imul eax, edx            ; multiplico (eax = elem1 * elem2)
+    push edx                 ; push edx a la pila porque va a haber resto de division
+    xor edx, edx             ; limpio edx
+    mov ecx, 255             ; muevo 255
+    idiv ecx                 ; division (eax = resultado / 255)
+    cmp eax, 255             ; si es mayor que 255, overflow
     jge cambioMul
-    xor edx, edx
-    pop edx ; edx queda como antes
-    mov dl, al ; resultado final en edx
-    pop ecx ; ecx como antes
-    xor eax, eax
-    pop eax ; eax como antes
-    mov byte[eax+esi*4], dl
-    inc ecx
+    pop edx                  ; edx queda como antes
+    mov dl, al               ; resultado final en dl
+    pop ecx                  ; ecx como antes 
+    pop eax                  ; eax como antes
+    mov byte[eax+esi*4], dl  ; muevo byte resultado
+    inc ecx                  ; incremento iteracion
     inc esi
     JMP multiply
 
 
-cambioMul:
+cambioMul:                    ;si hay overflow, no cambio pixel y continuo recorriendo
     pop edx
     pop ecx
+    pop eax
     inc ecx
     inc esi
-    pop eax
     JMP multiply
 
 ;--------------------------------------------------------------
@@ -172,6 +167,7 @@ cambioMul:
 multiplyBlendSIMD:
     push ebp
     mov ebp, esp
+    ;muevo parametros a registros
     mov eax, [ebp+8];red1
     mov ebx, [ebp+20];red2
     call setupMul1
@@ -183,50 +179,44 @@ multiplyBlendSIMD:
     call setupMul1
     JMP fin
 
-    setupMul1:
+    setupMul1: 
+    ;setup inicial para recorrido
     push ebp
     mov ebp, esp
-    mov ecx, 0
-    mov esi, 0
-    xor edi, edi
+    mov ecx, 0      ;contador
+    mov esi, 0      ;multiplicador
     JMP cicloMul
 
     cicloMul:
 
     cmp ecx, 67000
     je fin
-    xor edx, edx
-    mov dl, [eax+ecx*4]
-    push eax
-    xor eax, eax
-    mov al, [ebx+ecx*4]
-    movd mm0, edx
+    xor edx, edx            ;limpio edx
+    mov dl, [eax+ecx*4]     ;muevo byte a dl
+    push eax                ;guardo eax para usarlo
+    xor eax, eax            ;limpio eax
+    mov al, [ebx+ecx*4]     ;muevo byte a al
+    movd mm0, edx           ;muevo los valores a los registros mmx
     movd mm1, eax
-    pop eax
+    pop eax                 ;eax queda como antes
 
-    pmullw mm0, mm1
-    push eax
-    xor eax, eax
+    pmullw mm0, mm1         ;multiplico los registros mmx y resultado queda en mm0
+    push eax                ;guardo eax
+    xor eax, eax            ;limpio registros
     xor edx, edx
-    movd eax, mm0
-    push eax
-    xor eax, eax
-    mov al, [esp]
-    add esp, 4
-    mov esi, 250
-    ;div esi
-    cmp al, 250
-    jg noCambia
-    ;cmp edx, 0
-    ;jl noCambia
-    xor edx, edx
-    mov dl, al
+    movd eax, mm0           ;movemos resultado a eax
+    mov esi, 255            ;255 a esi para dividir
+    div esi                 ;dividimos esi y queda el resultado en eax
+    cmp eax, 255            ;verifico overflow
+    jg noCambia             ;si no hay, no cambiamos pixel
+    xor edx, edx            
+    mov dl, al              ;movemos resultado a dl
     pop eax
-    mov [eax+ecx*4], dl
+    mov [eax+ecx*4], dl     ;cambiamos pixel
     inc ecx
     jmp cicloMul
 
-    noCambia:
+    noCambia:           ; hay overflow, continua recorrido
     inc ecx
     pop eax
     jmp cicloMul

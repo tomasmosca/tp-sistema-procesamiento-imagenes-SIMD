@@ -211,10 +211,10 @@ int main(int argc, char** argv) {
     start = std::clock();
 
     // Funciones ASM
-    aclararSIMD(reds, greens, blues, 50);
+    //aclararSIMD(reds, greens, blues, 50);
     //aclarar(reds, greens, blues, 50);
     //multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
-    //multiplyBlendSIMD(reds, greens, blues, reds1, greens1, blues1);
+    multiplyBlendSIMD(reds, greens, blues, reds1, greens1, blues1);
 
     // Fin del timer
     std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
