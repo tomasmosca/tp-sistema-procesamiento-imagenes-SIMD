@@ -211,6 +211,6 @@ int main(int argc, char** argv) {
     printf("Time measured: %.5f seconds.\n", elapsed);
     //mBlend();
     //medianF();
-	WriteOutBmp24(FileBuffer, "Lena4.bmp", BufferSize);
+	WriteOutBmp24(FileBuffer, "img-resultado.bmp", BufferSize);
 	return 1;
 }
