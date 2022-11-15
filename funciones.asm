@@ -58,7 +58,7 @@ aclararSIMD:
     jmp setup
 
     setup:
-    mov ecx, 1              ;contador
+    mov ecx, 0              ;contador
     movd mm6, eax           ;movemos n hacia mm6
     jmp recorridoPrincipal  ;aqui se realizar la suma a cada reg mmx
 
@@ -76,33 +76,29 @@ aclararSIMD:
     paddw mm2, mm6
     
     movd edx, mm0           ;se mueve el resultado hacia los regs de proposito general
-    call cambio1            ;para cada registro, se verifica que no haya overflow
-    movd edx, mm1
-    call cambio2
-    movd edx, mm2
-    call cambio3
-
-    inc ecx                 ;incremento contador
-    jmp recorridoPrincipal  
-
+    jmp cambio1            ;para cada registro, se verifica que no haya overflow
 
 cambio1:                    ;si hay overflow, no cambia.
     cmp edx, 255
-    jg noMover
+    jg cambio2
     mov [ebx+ecx*4], edx    ;si no hay oveflow, movemos el resultado hacia esa posicion del arreglo
+    jmp cambio2
     ret
 cambio2:
     cmp edx, 255
-    jg noMover
+    jg cambio3
     mov [esi+ecx*4], edx
+    jmp cambio3
     ret
 cambio3:
     cmp edx, 255
     jg noMover
     mov [edi+ecx*4], edx
+    jmp noMover
     ret
-
 noMover:
+    inc ecx                 ;incremento contador
+    jmp recorridoPrincipal  
     ret
 
 ;----------------------------------------------
