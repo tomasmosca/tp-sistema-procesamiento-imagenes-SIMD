@@ -1,19 +1,16 @@
 
 
 section .text
-;global main
 global aclarar
 global aclararSIMD
 global multiplyBlend
 global multiplyBlendSIMD
-;main:
 
 aclarar:
- 
     push ebp
     mov ebp, esp
-    mov eax, [ebp + 20];valor n
-    mov ebx, [ebp + 8]; primera matriz red
+    mov eax, [ebp + 20] ;valor n
+    mov ebx, [ebp + 8]  ;primera matriz red
     call setupIter
     mov ebx, [ebp + 12] ;segunda matriz green
     call setupIter
@@ -21,45 +18,34 @@ aclarar:
     call setupIter
     JMP fin
 
-    setupIter:
+    setupIter:      ;setup para inciar el recorrido
     push ebp
     mov ebp, esp
-    mov ecx, 1
-    mov esi, 0
-    mov edi, 0
+    mov ecx, 0      ;contador
+    mov esi, 0      ;para avanzar en el arreglo
     jmp recorro
     
     recorro:
-    cmp ecx, 67000
+    cmp ecx, 67000          ;cantidad de iteraciones (para cubrir la imagen)
     JE fin
-    mov edx, [ebx+esi*4]
-    add edx, eax
-    cmp edx, 255
+    mov edx, [ebx+esi*4]    ;pixel de esa posicion hacia edx
+    add edx, eax            ;suma n al pixel
+    cmp edx, 255            ;si es mayor que 255, hay overflow. Si es menor, entonces se modifica el pixel
     jg overflow
-    ;cmp edx, 0
-    ;jl underflow
     jmp normal
 
-    overflow:
-    mov edx, 255
-    ;mov [ebx+esi*4], edx   ;bug al mover dato
+    overflow:               ;si hay overflow, no cambia el pixel, y continua iterando
     inc ecx
     inc esi
     JMP recorro
 
-    underflow:
-    mov edx, 0
-    ;mov [ebx+esi*4], edx
-    inc ecx
-    inc esi
-    JMP recorro
-
-    normal:
+    normal:                 ;sin overflow, cambia el pixel, usando dl para que entre la posicion a la que se mueve
     mov [ebx+esi*4], dl
     inc ecx
     inc esi
     JMP recorro
 
+;------------------------------------------------------------------
 
 aclararSIMD:
 
@@ -72,46 +58,38 @@ aclararSIMD:
     jmp setup
 
     setup:
-    mov ecx, 1  ;contador
-    movd mm7, eax
-    jmp cicloSetup
-
-    cicloSetup:
-    paddw mm6, mm7  ;en mm6 esta n (ocupa los 64 bytes)
-    cmp ecx, 1
-    je recorridoPrincipal
-    psllq mm6, 8
-    dec ecx
-    jmp cicloSetup
+    mov ecx, 1              ;contador
+    movd mm6, eax           ;movemos n hacia mm6
+    jmp recorridoPrincipal  ;aqui se realizar la suma a cada reg mmx
 
     recorridoPrincipal:
 
-    cmp ecx, 67000
+    cmp ecx, 67000          ;cantidad de iteraciones
     je fin
 
-    movd mm0, [ebx+ecx*4]
+    movd mm0, [ebx+ecx*4]   ;pixel en esa posicion hacia el reg mmx
     movd mm1, [esi+ecx*4]
     movd mm2, [edi+ecx*4]
 
-    paddw mm0, mm6
+    paddw mm0, mm6          ;se añade n que es el valor que es encuentra en mm6 a cada reg mmx
     paddw mm1, mm6
     paddw mm2, mm6
     
-    movd edx, mm0
-    call cambio1
+    movd edx, mm0           ;se mueve el resultado hacia los regs de proposito general
+    call cambio1            ;para cada registro, se verifica que no haya overflow
     movd edx, mm1
     call cambio2
     movd edx, mm2
     call cambio3
 
-    inc ecx
-    jmp recorridoPrincipal
+    inc ecx                 ;incremento contador
+    jmp recorridoPrincipal  
 
 
-cambio1:
+cambio1:                    ;si hay overflow, no cambia.
     cmp edx, 255
     jg noMover
-    mov [ebx+ecx*4], edx
+    mov [ebx+ecx*4], edx    ;si no hay oveflow, movemos el resultado hacia esa posicion del arreglo
     ret
 cambio2:
     cmp edx, 255

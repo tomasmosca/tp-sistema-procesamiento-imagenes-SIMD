@@ -197,12 +197,11 @@ int main(int argc, char** argv) {
 	RGB_Allocate(blues1);
 	GetPixlesFromBMP24( reds, greens, blues, BufferSize, rows, cols, FileBuffer);
     GetPixlesFromBMP24( reds1, greens1, blues1, BufferSize1, rows1, cols1, FileBuffer1);
-    //aclarar(reds, greens, blues, n);
     struct timespec begin, end; 
     clock_gettime(CLOCK_REALTIME, &begin);
-    //aclararSIMD(reds, greens, blues, n);
+    aclararSIMD(reds, greens, blues, n);
     //aclarar(reds, greens, blues, n);
-    multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
+    //multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
     //multiplyBlendSIMD(reds, greens, blues, reds1, greens1, blues1);
     clock_gettime(CLOCK_REALTIME, &end);
     long seconds = end.tv_sec - begin.tv_sec;
