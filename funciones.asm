@@ -109,6 +109,7 @@ noMover:
 
 multiplyBlend:
     push ebp
+    ;limpio los registros
     mov ebp, esp
     xor eax, eax
     xor ebx, ebx
@@ -229,18 +230,14 @@ multiplyBlendSIMD:
     inc ecx
     jmp cicloMul
 
-
     noCambia:
     inc ecx
     pop eax
     jmp cicloMul
 
-
-
-
 fin:
     mov esp, ebp
     pop ebp
-    emms
+    emms            ; para liberar mmx
     ret
 

@@ -177,7 +177,6 @@ void WriteOutBmp24(char* FileBuffer, const char* NameOfFileToCreate, int BufferS
 
 
 int main(int argc, char** argv) {
-    int n = 50;
 	char* FileBuffer; int BufferSize;
     char* FileBuffer1; int BufferSize1;
 	if(argc != 3) {
@@ -212,8 +211,8 @@ int main(int argc, char** argv) {
     start = std::clock();
 
     // Funciones ASM
-    aclararSIMD(reds, greens, blues, n);
-    //aclarar(reds, greens, blues, n);
+    //aclararSIMD(reds, greens, blues, 50);
+    aclarar(reds, greens, blues, 50);
     //multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
     //multiplyBlendSIMD(reds, greens, blues, reds1, greens1, blues1);
 
