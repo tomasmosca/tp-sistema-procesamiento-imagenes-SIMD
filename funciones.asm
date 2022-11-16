@@ -4,7 +4,8 @@ indice resb 1
 section .text
 global aclarar
 global aclararSIMD
-global medianFliter
+global medianFilter
+global medianFilterSIMD
 global multiplyBlend
 global multiplyBlendSIMD
 
@@ -169,6 +170,12 @@ medianFilter:
     inc ecx
     inc esi
     JMP median
+
+;----------------------------------------------
+
+medianFilterSIMD:
+    
+
 
 ;----------------------------------------------
 
