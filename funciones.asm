@@ -1,8 +1,10 @@
-
+section .bss
+indice resb 1
 
 section .text
 global aclarar
 global aclararSIMD
+global medianFliter
 global multiplyBlend
 global multiplyBlendSIMD
 
@@ -100,6 +102,73 @@ noMover:
     inc ecx                 ;incremento contador
     jmp recorridoPrincipal  
     ret
+
+;----------------------------------------------
+
+medianFilter:
+    push ebp
+    mov ebp, esp
+    mov ebx, [ebp+20];window
+    mov eax, [ebp+8];red1
+    call setupMedian
+    mov eax, [ebp+12];green1
+    call setupMedian
+    mov eax, [ebp+16];blue1
+    call setupMedian
+    JMP fin
+
+    setupMedian:
+    push ebp
+    mov ebp, esp
+    mov ecx, 2;contador
+    mov esi, 2;empiezo en el tercer elemento para no tomar los bordes
+    mov edi, 1
+    JMP median
+
+    median:
+    cmp ecx, 66999 ; penultimo elemento para no tomar el borde
+    JE fin
+    mov [indice], esi
+    inc esi
+    mov dl, byte[eax+esi*4]
+    inc esi
+    JMP sumaMedian
+
+    sumaMedian:
+    cmp edi, ebx
+    JE promedio
+    push ebx
+    mov bl, byte[eax+esi*4]
+    add edx, ebx
+    inc edi
+    inc esi
+    xor ebx, ebx
+    pop ebx
+    JMP sumaMedian
+
+    promedio:
+    push edx
+    xor edx, edx
+    push eax ;guardo vector
+    xor eax, eax
+    mov eax, edx
+    idiv ebx ;promedio(eax = suma de pixeles adyacentes/window)
+    xor edi, edi
+    mov dl, al;resultado final en edx
+    xor eax, eax
+    pop eax ;recupero el vector
+    mov esi, [indice]
+    cmp edx, 255
+    JG validarOverflow
+    mov byte[eax+esi*4], dl
+    inc ecx
+    inc esi
+    JMP median
+    
+    validarOverflow:
+    inc ecx
+    inc esi
+    JMP median
 
 ;----------------------------------------------
 
