@@ -131,7 +131,7 @@ medianFilter:
     JE fin
     mov [indice], esi
     inc esi
-    mov dl, byte[eax+esi*4]
+    mov edx, [eax+esi*4]
     inc esi
     JMP sumaMedian
 
@@ -139,7 +139,7 @@ medianFilter:
     cmp edi, ebx
     JE promedio
     push ebx
-    mov bl, byte[eax+esi*4]
+    mov ebx, [eax+esi*4]
     add edx, ebx
     inc edi
     inc esi
@@ -174,8 +174,57 @@ medianFilter:
 ;----------------------------------------------
 
 medianFilterSIMD:
+    push ebp
+    mov ebp, esp
+    mov ebx, [ebp+20];window
+    mov eax, [ebp+8];red1
+    call setupMedian1
+    mov eax, [ebp+12];green1
+    call setupMedian1
+    mov eax, [ebp+16];blue1
+    call setupMedian1
+    JMP fin
 
+    setupMedian1:
+    push ebp
+    mov ebp, esp
+    mov ecx, 2
+    mov esi, 2
+    mov edi, 1
+    JMP median1
+    
+    median1:
+    CMP ecx, 66999
+    movd mm0, [eax+esi*4]
+    mov [indice], esi
+    inc esi
+    movd mm0, [eax+esi*4]
+    inc esi
+    JMP sumaProm
+    
+    sumaProm:
+    CMP edi, ebx
+    JE promedioMMX
+    movd mm1, [eax+esi*4]
+    paddw mm0, mm1
+    inc edi 
+    inc esi
+    JMP sumaProm
 
+    promedioMMX:
+    push eax
+    xor eax, eax
+    movd eax, mm0
+    idiv ebx
+    xor edi, edi
+    mov dl, al
+    xor eax, eax
+    pop eax
+    mov esi, [indice]
+    mov byte[eax+esi*4], dl
+    inc ecx
+    inc esi
+    JMP median1
 
 ;----------------------------------------------
 
