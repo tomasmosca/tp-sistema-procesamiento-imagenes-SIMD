@@ -4,7 +4,7 @@ indice resb 1
 section .text
 global aclarar
 global aclararSIMD
-global medianFliter
+global medianFilter
 global multiplyBlend
 global multiplyBlendSIMD
 
