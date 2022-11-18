@@ -148,11 +148,10 @@ medianFilter:
     JMP sumaMedian
 
     promedio:
-    push edx
-    xor edx, edx
     push eax ;guardo vector
     xor eax, eax
     mov eax, edx
+    xor edx, edx
     idiv ebx ;promedio(eax = suma de pixeles adyacentes/window)
     xor edi, edi
     mov dl, al;resultado final en edx
