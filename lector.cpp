@@ -214,7 +214,7 @@ int main(int argc, char** argv) {
     //aclararSIMD(reds, greens, blues, 50);
     //aclarar(reds, greens, blues, 50);
     //medianFilter(reds,greens,blues, 9);
-    medianFilterSIMD(reds,greens,blues, 60);
+    //medianFilterSIMD(reds,greens,blues, 60);
     //multiplyBlend(reds, greens, blues, reds1, greens1, blues1);
     //multiplyBlendSIMD(reds, greens, blues, reds1, greens1, blues1);
 

@@ -88,12 +88,14 @@ cambio1:                    ;si hay overflow, no cambia.
     jmp cambio2
     ret
 cambio2:
+    movd edx, mm1
     cmp edx, 255
     jg cambio3
     mov [esi+ecx*4], edx
     jmp cambio3
     ret
 cambio3:
+    movd edx, mm2
     cmp edx, 255
     jg noMover
     mov [edi+ecx*4], edx
