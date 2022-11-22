@@ -131,6 +131,11 @@ medianFilter:
     median:
     cmp ecx, 66999 ; penultimo elemento para no tomar el borde
     JE fin
+    push ecx
+    add ecx, ebx
+    CMP ecx, 67000 ;me aseguro de que no se pase del tamaño de la imagen
+    JG fin
+    pop ecx
     mov [indice], esi
     inc esi
     mov edx, [eax+esi*4]
@@ -158,8 +163,8 @@ medianFilter:
     xor edi, edi
     mov dl, al;resultado final en edx
     xor eax, eax
-    pop eax ;recupero el vector
-    mov esi, [indice]
+    pop eax 
+    mov esi, [indice] ;recupero el vector
     cmp edx, 255
     JG validarOverflow
     mov byte[eax+esi*4], dl
@@ -196,18 +201,25 @@ medianFilterSIMD:
     
     median1:
     CMP ecx, 66999
-    movd mm0, [eax+esi*4]
-    mov [indice], esi
+    JE fin    
+    push ecx
+    add ecx, ebx
+    CMP ecx, 67000 ;me aseguro de que no se pase del tamaño de la imagen
+    JG fin
+    pop ecx
+    mov [indice], esi ;guardo el indice actual 
     inc esi
-    movd mm0, [eax+esi*4]
+    mov dl, [eax+esi*4] ;muevo byte a dl
+    movd mm0, edx ;muevo el valor al registro mm0
     inc esi
     JMP sumaProm
     
     sumaProm:
     CMP edi, ebx
     JE promedioMMX
-    movd mm1, [eax+esi*4]
-    paddw mm0, mm1
+    mov dl, [eax+esi*4]
+    movd mm1, edx 
+    paddw mm0, mm1 ;sumo el valor que esta en mm0 con el valor siguiente que esta en mm1
     inc edi 
     inc esi
     JMP sumaProm
@@ -215,14 +227,22 @@ medianFilterSIMD:
     promedioMMX:
     push eax
     xor eax, eax
+    xor edx, edx
     movd eax, mm0
     idiv ebx
     xor edi, edi
     mov dl, al
     xor eax, eax
     pop eax
-    mov esi, [indice]
-    mov byte[eax+esi*4], dl
+    cmp edx, 255
+    JG validarOverflowSIMD
+    mov esi, [indice] ;recupero el indice actual
+    mov byte[eax+esi*4], dl ;muevo el resultado al pixel
+    inc ecx
+    inc esi
+    JMP median1
+
+    validarOverflowSIMD:
     inc ecx
     inc esi
     JMP median1
