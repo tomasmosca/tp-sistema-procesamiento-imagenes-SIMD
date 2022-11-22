@@ -321,6 +321,11 @@ finIteracion:
 multiplyBlendSIMD:
     push ebp
     mov ebp, esp
+    ;limpio los registros
+    xor eax, eax
+    xor ebx, ebx
+    xor ecx, ecx
+    xor edx, edx
     ;muevo parametros a registros
     mov eax, [ebp+8];red1
     mov ebx, [ebp+20];red2
@@ -337,43 +342,55 @@ multiplyBlendSIMD:
     ;setup inicial para recorrido
     push ebp
     mov ebp, esp
-    mov ecx, 0      ;contador
-    mov esi, 0      ;multiplicador
-    JMP cicloMul
+    xor esi, esi
+    JMP cicloMulROWS
 
-    cicloMul:
+    cicloMulROWS:
+    mov ecx, [eax+esi*4]
+    mov edx, [ebx+esi*4]
+    xor edi, edi
+    jmp cicloMulCOLS
 
-    cmp ecx, 67000
-    je fin
-    xor edx, edx            ;limpio edx
-    mov dl, [eax+ecx*4]     ;muevo byte a dl
-    push eax                ;guardo eax para usarlo
-    xor eax, eax            ;limpio eax
-    mov al, [ebx+ecx*4]     ;muevo byte a al
-    movd mm0, edx           ;muevo los valores a los registros mmx
-    movd mm1, eax
-    pop eax                 ;eax queda como antes
+    cicloMulCOLS:
+
+    cmp edi, 512                ;columnas
+    Jg finIteracion
+
+    push eax                    ;guardamos valor de eax y ebx en pila
+    push ebx
+    xor eax, eax                ;los limpiamos
+    xor ebx, ebx
+
+    mov al, [ecx+edi]               ; byte de array
+    mov bl, [edx+edi]               ; byte de array2
+
+    push edx                        ; guardo edx en la pila porque se usara para guardar el remainder de la division
+    push ecx                        ; para contener divisor
+    xor ecx, ecx
+    xor edx, edx
+    mov ecx, 255                    ; divisor
+
+    movd mm0, eax           ;muevo los valores a los registros mmx
+    movd mm1, ebx
 
     pmullw mm0, mm1         ;multiplico los registros mmx y resultado queda en mm0
-    push eax                ;guardo eax
-    xor eax, eax            ;limpio registros
-    xor edx, edx
-    movd eax, mm0           ;movemos resultado a eax
-    mov esi, 255            ;255 a esi para dividir
-    div esi                 ;dividimos esi y queda el resultado en eax
-    cmp eax, 255            ;verifico overflow
-    jg noCambia             ;si no hay, no cambiamos pixel
-    xor edx, edx            
-    mov dl, al              ;movemos resultado a dl
-    pop eax
-    mov [eax+ecx*4], dl     ;cambiamos pixel
-    inc ecx
-    jmp cicloMul
 
-    noCambia:           ; hay overflow, continua recorrido
-    inc ecx
+    movd eax, mm0           ;movemos resultado a eax
+    idiv ecx                ;dividimos esi y queda el resultado en eax
+          
+    pop ecx
+    mov [ecx+edi], al           ;cambiamos pixel
+    pop edx                     ; dasapilo los registros
+    pop ebx  
     pop eax
-    jmp cicloMul
+    inc edi
+    jmp cicloMulCOLS
+
+finCiclo:       
+inc esi
+cmp esi, 512            ;filas
+jge fin
+jmp cicloMulROWS
 
 fin:
     mov esp, ebp
