@@ -237,56 +237,64 @@ multiplyBlend:
     xor ebx, ebx
     xor ecx, ecx
     xor edx, edx
-    mov eax, [ebp+8];red1
-    mov ebx, [ebp+20];red2
+    ;parametros
+    mov eax, [ebp+12]; param green1
+    mov ebx, [ebp+24]; param green2
     call setupMul
-    mov eax, [ebp+12];green1
-    mov ebx, [ebp+24];green2
+    mov eax, [ebp+8]; param red1
+    mov ebx, [ebp+20]; param red2
     call setupMul
-    mov eax, [ebp+16];blue1
-    mov ebx, [ebp+28];blue2
+    mov eax, [ebp+16]; param blue1
+    mov ebx, [ebp+28]; param blue2
     call setupMul
     JMP fin
 
 setupMul:
     push ebp
     mov ebp, esp
-    mov ecx, 0      ; contador
-    mov esi, 0      ; multiplicador
-    JMP multiply
-    
-multiply:
-    cmp ecx, 67000
-    JE fin
-    mov dl, byte[eax+esi*4]  ; byte de array
-    push eax                 ; usaremos eax para contener resultado de elem1 * elem2 / 255
-    push ecx                 ; para contener el 255 a dividir
-    xor eax, eax             ; limpiamos eax
-    mov al, byte[ebx+esi*4]  ; byte de red2
-    imul eax, edx            ; multiplico (eax = elem1 * elem2)
-    push edx                 ; push edx a la pila porque va a haber resto de division
-    xor edx, edx             ; limpio edx
-    mov ecx, 255             ; muevo 255
-    idiv ecx                 ; division (eax = resultado / 255)
-    cmp eax, 255             ; si es mayor que 255, overflow
-    jge cambioMul
-    pop edx                  ; edx queda como antes
-    mov dl, al               ; resultado final en dl
-    pop ecx                  ; ecx como antes 
-    pop eax                  ; eax como antes
-    mov byte[eax+esi*4], dl  ; muevo byte resultado
-    inc ecx                  ; incremento iteracion
-    inc esi
-    JMP multiply
+    xor esi, esi
+    JMP iteracionROWS
 
+iteracionROWS:
+    mov ecx, [eax+esi*4]
+    mov edx, [ebx+esi*4]
+    xor edi, edi
+    jmp multiplyCOLS
 
-cambioMul:                    ;si hay overflow, no cambio pixel y continuo recorriendo
-    pop edx
+multiplyCOLS:
+    cmp edi, 512                ;columnas
+    Jg finIteracion
+
+    push eax                    ;guardamos valor de eax y ebx en pila
+    push ebx
+    xor eax, eax                ;los limpiamos
+    xor ebx, ebx
+
+    mov al, [ecx+edi]               ; byte de array
+    mov bl, [edx+edi]               ; byte de array2
+
+    push edx                        ; guardo edx en la pila porque se usara para guardar el remainder de la division
+    push ecx                        ; para contener divisor
+    xor ecx, ecx
+    xor edx, edx
+    mov ecx, 255                    ; divisor
+                                    ; formula: (top color * bottom color) / 255
+    imul ax, bx                     ; multiplico (ax = ax * bx)
+    idiv ecx             ; divido por 255 
+
     pop ecx
+    mov [ecx+edi], al           ; muevo la parte baja que tendra el resultado
+    pop edx                     ; dasapilo los registros
+    pop ebx  
     pop eax
-    inc ecx
+    inc edi
+    JMP multiplyCOLS
+    
+finIteracion:
     inc esi
-    JMP multiply
+    cmp esi, 512            ;filas
+    jge fin
+    jmp iteracionROWS
 
 ;--------------------------------------------------------------
 
